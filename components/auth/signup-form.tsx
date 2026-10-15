@@ -2,6 +2,7 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -13,8 +14,7 @@ export default function SignupForm() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
-  const [pendingAction, setPendingAction] =
-    useState<PendingAction>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
 
   const isBusy = pendingAction !== null;
 
@@ -68,7 +68,7 @@ export default function SignupForm() {
       setShowPassword(false);
 
       if (data.session) {
-        router.replace("/onboarding");
+        router.replace("/dashboard");
         router.refresh();
         return;
       }
@@ -155,9 +155,7 @@ export default function SignupForm() {
         <button
           type="button"
           disabled={isBusy}
-          onClick={() =>
-            setMessage("Google sign-in is not connected yet.")
-          }
+          onClick={() => setMessage("Google sign-in is not connected yet.")}
           className="mt-6 w-full rounded-lg border border-stone-300 px-4 py-3 text-sm font-semibold hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Continue with Google
@@ -165,17 +163,11 @@ export default function SignupForm() {
 
         <div className="my-6 flex items-center gap-3">
           <div className="h-px flex-1 bg-stone-200" />
-          <span className="text-xs text-stone-500">
-            or use your email
-          </span>
+          <span className="text-xs text-stone-500">or use your email</span>
           <div className="h-px flex-1 bg-stone-200" />
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          aria-busy={isBusy}
-          className="space-y-5"
-        >
+        <form onSubmit={handleSubmit} aria-busy={isBusy} className="space-y-5">
           <div>
             <label
               htmlFor="name"
@@ -244,12 +236,8 @@ export default function SignupForm() {
               <button
                 type="button"
                 disabled={isBusy}
-                onClick={() =>
-                  setShowPassword((visible) => !visible)
-                }
-                aria-label={
-                  showPassword ? "Hide password" : "Show password"
-                }
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
                 aria-pressed={showPassword}
                 className="absolute inset-y-0 right-4 text-xs font-medium text-emerald-800 disabled:opacity-60"
               >
@@ -257,10 +245,7 @@ export default function SignupForm() {
               </button>
             </div>
 
-            <p
-              id="password-help"
-              className="mt-2 text-xs text-stone-500"
-            >
+            <p id="password-help" className="mt-2 text-xs text-stone-500">
               Use at least 8 characters.
             </p>
           </div>
@@ -294,6 +279,15 @@ export default function SignupForm() {
             {message}
           </p>
         </form>
+        <p className="mt-6 text-center text-sm text-stone-600">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="font-semibold text-emerald-800 underline"
+          >
+            Sign in
+          </Link>
+        </p>
       </section>
     </main>
   );
