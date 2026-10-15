@@ -7,6 +7,7 @@ import PageLoader from "@/components/ui/page-loader";
 import LogoutButton from "@/components/auth/logout-button";
 import ProfilePhoto from "@/components/dashboard/profile-photo";
 import { createClient } from "@/lib/supabase/server";
+import MobileHeader from "@/components/dashboard/mobile-header";
 
 export const metadata: Metadata = {
   title: "Dashboard | Job Plex",
@@ -197,10 +198,14 @@ async function DashboardContent() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#c5b2f5] p-0 text-[#242332] sm:p-4 lg:p-7">
-      <div className="mx-auto min-h-screen max-w-[1540px] bg-[#f6f6f4] sm:min-h-[calc(100vh-32px)] sm:rounded-[30px] lg:grid lg:min-h-[calc(100vh-56px)] lg:grid-cols-[210px_minmax(0,1fr)]">
+    <div className="min-h-screen bg-[#f6f6f4] text-[#242332] lg:bg-[#c5b2f5] lg:p-7">
+      <div className="mx-auto min-h-screen max-w-[1540px] bg-[#f6f6f4] lg:grid lg:min-h-[calc(100vh-56px)] lg:grid-cols-[210px_minmax(0,1fr)] lg:rounded-[30px]">
+  <MobileHeader
+    name={profile.full_name}
+    photoUrl={photoUrl}
+  />
         {/* Sidebar */}
-        <aside className="p-3 lg:pr-0">
+     <aside className="hidden p-3 pr-0 lg:block">
           <div className="flex h-full flex-col rounded-[22px] bg-[#222131] px-4 py-5 text-white">
             {/* Visually crops the padding inside the existing logo */}
            <Link
@@ -297,12 +302,14 @@ async function DashboardContent() {
               </p>
             </div>
 
-            <LogoutButton />
+            <div className="hidden lg:block">
+  <LogoutButton />
+</div>
           </header>
 
           <div className="mt-7 grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_290px]">
             {/* Main column */}
-            <div className="min-w-0 space-y-5">
+            <div className="flex min-w-0 flex-col gap-5">
               <section aria-labelledby="overview-title">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <h2
@@ -347,9 +354,12 @@ async function DashboardContent() {
                 </div>
               </section>
 
-              <div className="grid items-start gap-5 md:grid-cols-2">
+             <div className="order-3 grid items-start gap-5 md:grid-cols-2 xl:order-none">
                 {/* Profile */}
-                <section className={panel}>
+                <section className={`${panel} scroll-mt-24`}
+                id="my-profile"
+                
+                >
                   <div className="flex items-center justify-between gap-3">
                     <h2 className="text-base font-semibold">
                       My profile
@@ -469,8 +479,8 @@ async function DashboardContent() {
 
               {/* Job discovery */}
               <section
-                id="opportunities"
-                className={`${panel} scroll-mt-6`}
+                 id="opportunities"
+                className={`${panel} order-2 scroll-mt-24 xl:order-none`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <h2 className="text-base font-semibold">

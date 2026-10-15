@@ -1,20 +1,16 @@
 "use client";
 
 import {
+  useLayoutEffect,
   useRef,
   useState,
   type FormEvent,
   type KeyboardEvent,
 } from "react";
 import { useRouter } from "next/navigation";
-import {
-  AnimatePresence,
-  motion,
-  useReducedMotion,
-} from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { saveProfile } from "@/actions/profile";
-
 
 export type ProfileValues = {
   full_name: string;
@@ -27,6 +23,12 @@ export type ProfileValues = {
 };
 
 type FieldErrors = Partial<Record<keyof ProfileValues, string>>;
+
+type ChoiceOption = {
+  value: string;
+  label: string;
+  detail?: string;
+};
 
 const steps = [
   {
@@ -43,21 +45,53 @@ const steps = [
   },
 ];
 
-const experienceOptions = [
-  { value: "graduate", label: "Graduate", detail: "Starting my career" },
-  { value: "junior", label: "Junior", detail: "Building experience" },
-  { value: "mid", label: "Mid-level", detail: "Confident in my craft" },
-  { value: "senior", label: "Senior", detail: "Bringing deep experience" },
+const experienceOptions: ChoiceOption[] = [
+  {
+    value: "graduate",
+    label: "Graduate",
+    detail: "Starting my career",
+  },
+  {
+    value: "junior",
+    label: "Junior",
+    detail: "Building experience",
+  },
+  {
+    value: "mid",
+    label: "Mid-level",
+    detail: "Confident in my craft",
+  },
+  {
+    value: "senior",
+    label: "Senior",
+    detail: "Bringing deep experience",
+  },
 ];
 
-const workOptions = [
-  { value: "remote", label: "Remote", detail: "Work from anywhere eligible" },
-  { value: "hybrid", label: "Hybrid", detail: "A mix of home and office" },
-  { value: "onsite", label: "On-site", detail: "Work with the team in person" },
-  { value: "any", label: "Open to any", detail: "Keep my options open" },
+const workOptions: ChoiceOption[] = [
+  {
+    value: "remote",
+    label: "Remote",
+    detail: "Work remotely where eligible",
+  },
+  {
+    value: "hybrid",
+    label: "Hybrid",
+    detail: "A mix of home and office",
+  },
+  {
+    value: "onsite",
+    label: "On-site",
+    detail: "Work with the team in person",
+  },
+  {
+    value: "any",
+    label: "Open to any",
+    detail: "Keep my options open",
+  },
 ];
 
-const employmentOptions = [
+const employmentOptions: ChoiceOption[] = [
   { value: "full_time", label: "Full-time" },
   { value: "part_time", label: "Part-time" },
   { value: "contract", label: "Contract" },
@@ -67,6 +101,57 @@ const employmentOptions = [
 
 const inputStyles =
   "mt-2 w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-[#242332] outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100 disabled:opacity-60";
+
+const primaryButtonStyles =
+  "inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#242332] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#39364e] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-600 disabled:cursor-wait disabled:opacity-60";
+
+function TextField({
+  name,
+  label,
+  value,
+  placeholder,
+  maxLength,
+  autoComplete,
+  error,
+  onChange,
+}: {
+  name: string;
+  label: string;
+  value: string;
+  placeholder: string;
+  maxLength: number;
+  autoComplete?: string;
+  error?: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <label htmlFor={name} className="text-sm font-semibold">
+        {label}
+      </label>
+
+      <input
+        id={name}
+        name={name}
+        value={value}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        autoComplete={autoComplete}
+        required
+        onChange={(event) => onChange(event.target.value)}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${name}-error` : undefined}
+        className={inputStyles}
+      />
+
+      {error && (
+        <p id={`${name}-error`} className="mt-2 text-xs text-red-700">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
 
 function ChoiceGroup({
   name,
@@ -79,26 +164,17 @@ function ChoiceGroup({
   name: string;
   label: string;
   value: string;
-  options: {
-    value: string;
-    label: string;
-    detail?: string;
-  }[];
+  options: ChoiceOption[];
   error?: string;
   onChange: (value: string) => void;
 }) {
   return (
-    <fieldset
-      aria-describedby={error ? `${name}-error` : undefined}
-    >
+    <fieldset aria-describedby={error ? `${name}-error` : undefined}>
       <legend className="text-sm font-semibold">{label}</legend>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         {options.map((option) => (
-          <label
-            key={option.value}
-            className="relative cursor-pointer"
-          >
+          <label key={option.value} className="relative cursor-pointer">
             <input
               type="radio"
               name={name}
@@ -108,7 +184,7 @@ function ChoiceGroup({
               className="peer sr-only"
             />
 
-            <span className="flex h-full items-start justify-between gap-3 rounded-xl border border-stone-200 bg-white p-4 transition duration-200 peer-checked:border-[#9680d8] peer-checked:bg-[#f0ebff] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-violet-600">
+            <span className="flex h-full items-start justify-between gap-3 rounded-xl border border-stone-200 bg-white p-4 transition-colors peer-checked:border-[#9680d8] peer-checked:bg-[#f0ebff] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 peer-focus-visible:outline-violet-600">
               <span>
                 <span className="block text-sm font-medium">
                   {option.label}
@@ -137,15 +213,66 @@ function ChoiceGroup({
       </div>
 
       {error && (
-        <p
-          id={`${name}-error`}
-          className="mt-2 text-xs text-red-700"
-        >
+        <p id={`${name}-error`} className="mt-2 text-xs text-red-700">
           {error}
         </p>
       )}
     </fieldset>
   );
+}
+
+function validateStep(step: number, values: ProfileValues): FieldErrors {
+  const errors: FieldErrors = {};
+
+  if (step === 0) {
+    if (!values.full_name.trim() || values.full_name.trim().length > 100) {
+      errors.full_name = "Enter your name, up to 100 characters.";
+    }
+
+    if (!values.location.trim() || values.location.trim().length > 150) {
+      errors.location = "Enter your city and country, up to 150 characters.";
+    }
+  }
+
+  if (step === 1) {
+    if (!values.target_role.trim() || values.target_role.trim().length > 150) {
+      errors.target_role = "Enter a target role, up to 150 characters.";
+    }
+
+    if (
+      values.skills.length < 1 ||
+      values.skills.length > 30 ||
+      values.skills.some((skill) => !skill.trim() || skill.length > 60)
+    ) {
+      errors.skills = "Add 1–30 skills, each up to 60 characters.";
+    }
+
+    if (
+      !experienceOptions.some(
+        (option) => option.value === values.experience_level,
+      )
+    ) {
+      errors.experience_level = "Choose your experience level.";
+    }
+  }
+
+  if (step === 2) {
+    if (
+      !workOptions.some((option) => option.value === values.work_arrangement)
+    ) {
+      errors.work_arrangement = "Choose a work arrangement.";
+    }
+
+    if (
+      !employmentOptions.some(
+        (option) => option.value === values.employment_type,
+      )
+    ) {
+      errors.employment_type = "Choose an employment type.";
+    }
+  }
+
+  return errors;
 }
 
 export default function OnboardingForm({
@@ -158,8 +285,8 @@ export default function OnboardingForm({
 
   const headingRef = useRef<HTMLHeadingElement>(null);
   const skillInputRef = useRef<HTMLInputElement>(null);
-  const transitionLock = useRef(false);
   const savingLock = useRef(false);
+  const savedRef = useRef(false);
 
   const [values, setValues] = useState<ProfileValues>(() => ({
     ...initialValues,
@@ -173,15 +300,32 @@ export default function OnboardingForm({
   }));
 
   const [step, setStep] = useState(0);
-  const [direction, setDirection] = useState(1);
   const [skillDraft, setSkillDraft] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [message, setMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const duration = reducedMotion ? 0 : 0.2;
+
+  // Clear the success screen when Next.js hides this page.
+  // Preserve field values so returning users can edit them.
+  useLayoutEffect(() => {
+    return () => {
+      if (savedRef.current) {
+        savedRef.current = false;
+        setIsSaved(false);
+        setStep(0);
+        setErrors({});
+        setMessage("");
+      }
+    };
+  }, []);
+
+  // Focus the current heading after step or status changes.
+  useLayoutEffect(() => {
+    headingRef.current?.focus({ preventScroll: true });
+  }, [step, isSaved]);
 
   function updateField<K extends keyof ProfileValues>(
     field: K,
@@ -200,15 +344,13 @@ export default function OnboardingForm({
     setMessage("");
   }
 
-  function mergeSkills() {
+  function getMergedSkills(): string[] | null {
     const additions = skillDraft
       .split(",")
       .map((skill) => skill.trim().toLowerCase())
       .filter(Boolean);
 
-    const skills = Array.from(
-      new Set([...values.skills, ...additions]),
-    );
+    const skills = Array.from(new Set([...values.skills, ...additions]));
 
     if (skills.length > 30) {
       setErrors((previous) => ({
@@ -230,7 +372,7 @@ export default function OnboardingForm({
   }
 
   function addSkills() {
-    const skills = mergeSkills();
+    const skills = getMergedSkills();
 
     if (!skills) return;
 
@@ -239,9 +381,7 @@ export default function OnboardingForm({
     skillInputRef.current?.focus();
   }
 
-  function handleSkillKeyDown(
-    event: KeyboardEvent<HTMLInputElement>,
-  ) {
+  function handleSkillKeyDown(event: KeyboardEvent<HTMLInputElement>) {
     if (
       !event.nativeEvent.isComposing &&
       (event.key === "Enter" || event.key === ",")
@@ -251,146 +391,65 @@ export default function OnboardingForm({
     }
   }
 
-  function validateStep(
-    currentStep: number,
-    candidate: ProfileValues,
-  ): FieldErrors {
-    const nextErrors: FieldErrors = {};
+  function goBack() {
+    if (savingLock.current) return;
 
-    if (currentStep === 0) {
-      if (
-        !candidate.full_name.trim() ||
-        candidate.full_name.trim().length > 100
-      ) {
-        nextErrors.full_name =
-          "Enter your name, up to 100 characters.";
-      }
-
-      if (
-        !candidate.location.trim() ||
-        candidate.location.trim().length > 150
-      ) {
-        nextErrors.location =
-          "Enter your city and country, up to 150 characters.";
-      }
-    }
-
-    if (currentStep === 1) {
-      if (
-        !candidate.target_role.trim() ||
-        candidate.target_role.trim().length > 150
-      ) {
-        nextErrors.target_role =
-          "Enter a target role, up to 150 characters.";
-      }
-
-      if (
-        candidate.skills.length < 1 ||
-        candidate.skills.length > 30 ||
-        candidate.skills.some((skill) => skill.length > 60)
-      ) {
-        nextErrors.skills =
-          "Add 1–30 skills, each up to 60 characters.";
-      }
-
-      if (
-        !experienceOptions.some(
-          (option) =>
-            option.value === candidate.experience_level,
-        )
-      ) {
-        nextErrors.experience_level =
-          "Choose your experience level.";
-      }
-    }
-
-    if (currentStep === 2) {
-      if (
-        !workOptions.some(
-          (option) =>
-            option.value === candidate.work_arrangement,
-        )
-      ) {
-        nextErrors.work_arrangement =
-          "Choose a work arrangement.";
-      }
-
-      if (
-        !employmentOptions.some(
-          (option) =>
-            option.value === candidate.employment_type,
-        )
-      ) {
-        nextErrors.employment_type =
-          "Choose an employment type.";
-      }
-    }
-
-    return nextErrors;
-  }
-
-  function goToStep(nextStep: number) {
-    if (transitionLock.current || nextStep === step) return;
-
-    transitionLock.current = true;
-    setIsTransitioning(true);
-    setDirection(nextStep > step ? 1 : -1);
     setErrors({});
     setMessage("");
-    setStep(nextStep);
+    setStep((previous) => Math.max(0, previous - 1));
   }
 
-  function finishTransition() {
-    transitionLock.current = false;
-    setIsTransitioning(false);
-    headingRef.current?.focus();
+  function goToDashboard() {
+    savedRef.current = false;
+
+    setIsSaved(false);
+    setStep(0);
+    setErrors({});
+    setMessage("");
+
+    router.replace("/dashboard");
+    router.refresh();
   }
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (
-      savingLock.current ||
-      transitionLock.current ||
-      isSaved
-    ) {
-      return;
-    }
+    if (savingLock.current || isSaved) return;
 
     let candidate = values;
 
     if (step === 1) {
-      const skills = mergeSkills();
+      const skills = getMergedSkills();
 
       if (!skills) return;
 
       candidate = { ...values, skills };
+
       setValues(candidate);
       setSkillDraft("");
     }
 
-    const nextErrors = validateStep(step, candidate);
+    const stepErrors = validateStep(step, candidate);
 
-    if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors);
+    if (Object.keys(stepErrors).length > 0) {
+      setErrors(stepErrors);
       setMessage("Please check the highlighted fields.");
       return;
     }
 
     if (step < steps.length - 1) {
-      goToStep(step + 1);
+      setErrors({});
+      setMessage("");
+      setStep((previous) => Math.min(steps.length - 1, previous + 1));
       return;
     }
 
-    // Recheck every step before saving.
     for (let index = 0; index < steps.length; index++) {
-      const stepErrors = validateStep(index, candidate);
+      const validationErrors = validateStep(index, candidate);
 
-      if (Object.keys(stepErrors).length > 0) {
-        goToStep(index);
-        setErrors(stepErrors);
+      if (Object.keys(validationErrors).length > 0) {
+        setStep(index);
+        setErrors(validationErrors);
         setMessage("Please check the highlighted fields.");
         return;
       }
@@ -407,18 +466,9 @@ export default function OnboardingForm({
       formData.set("location", candidate.location.trim());
       formData.set("target_role", candidate.target_role.trim());
       formData.set("skills", candidate.skills.join(", "));
-      formData.set(
-        "experience_level",
-        candidate.experience_level,
-      );
-      formData.set(
-        "work_arrangement",
-        candidate.work_arrangement,
-      );
-      formData.set(
-        "employment_type",
-        candidate.employment_type,
-      );
+      formData.set("experience_level", candidate.experience_level);
+      formData.set("work_arrangement", candidate.work_arrangement);
+      formData.set("employment_type", candidate.employment_type);
 
       const result = await saveProfile(formData);
 
@@ -427,34 +477,38 @@ export default function OnboardingForm({
         return;
       }
 
+      savedRef.current = true;
       setIsSaved(true);
     } catch {
-      setMessage(
-        "Your profile could not be saved. Please try again.",
-      );
+      setMessage("Your profile could not be saved. Please try again.");
     } finally {
       savingLock.current = false;
       setIsSaving(false);
     }
   }
 
+  const initials = values.full_name.trim()
+    ? values.full_name
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase()
+    : "JP";
+
   const previewPreferences = [
-    workOptions.find(
-      (option) => option.value === values.work_arrangement,
-    )?.label,
-    employmentOptions.find(
-      (option) => option.value === values.employment_type,
-    )?.label,
+    workOptions.find((option) => option.value === values.work_arrangement)
+      ?.label,
+    employmentOptions.find((option) => option.value === values.employment_type)
+      ?.label,
   ].filter(Boolean);
 
   if (isSaved) {
     return (
       <motion.div
-        initial={
-          reducedMotion ? false : { opacity: 0, y: 10 }
-        }
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration }}
+        initial={false}
+        animate={{ opacity: 1 }}
         className="py-12 text-center text-[#242332]"
       >
         <div
@@ -465,52 +519,64 @@ export default function OnboardingForm({
         </div>
 
         <h2
+          ref={headingRef}
           tabIndex={-1}
-          ref={(node) => node?.focus()}
           className="mt-6 text-3xl font-semibold tracking-tight outline-none"
         >
-          Your next chapter starts here.
+          Your profile is ready.
         </h2>
 
         <p role="status" className="mt-3 text-sm text-stone-500">
-          Your career profile has been saved.
+          Your career details have been saved.
         </p>
 
-        <button
-          type="button"
-          onClick={() => {
-            router.replace("/dashboard");
-            router.refresh();
-          }}
-          className="mt-7 rounded-full bg-[#242332] px-6 py-3 text-sm font-semibold text-white hover:bg-[#39364e] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-600"
-        >
-          Go to my dashboard →
-        </button>
+        <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              savedRef.current = false;
+              setIsSaved(false);
+              setStep(0);
+              setErrors({});
+              setMessage("");
+            }}
+            className="min-h-12 rounded-full border border-stone-200 px-6 py-3 text-sm font-medium hover:bg-stone-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-600"
+          >
+            Edit again
+          </button>
+
+          <button
+            type="button"
+            onClick={goToDashboard}
+            className={primaryButtonStyles}
+          >
+            Go to my dashboard →
+          </button>
+        </div>
       </motion.div>
     );
   }
 
   return (
     <div className="text-[#242332]">
-      {/* Progress */}
       <div className="mb-8">
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs font-semibold uppercase tracking-[0.15em] text-stone-500">
             Your career, your way
           </p>
 
-          <p className="text-xs text-stone-500">
+          <p className="shrink-0 text-xs text-stone-500">
             Step {step + 1} of {steps.length}
           </p>
         </div>
 
         <div
           role="progressbar"
-          aria-label="Onboarding steps"
+          aria-label="Profile steps"
           aria-valuemin={1}
-          aria-valuemax={3}
+          aria-valuemax={steps.length}
           aria-valuenow={step + 1}
-          aria-valuetext={`Step ${step + 1} of 3: ${steps[step].title}`}
+          aria-valuetext={`Step ${step + 1} of ${steps.length}: ${steps[step].title}`}
           className="mt-4 h-2 overflow-hidden rounded-full bg-stone-100"
         >
           <motion.div
@@ -560,342 +626,239 @@ export default function OnboardingForm({
           aria-busy={isSaving}
           className="min-w-0"
         >
-          <fieldset
-            disabled={isSaving || isTransitioning}
-            className="min-w-0"
-          >
-            <motion.div
-              layout={reducedMotion ? false : "size"}
+          <fieldset disabled={isSaving} className="min-w-0">
+            {/*
+              Animate only the current step on entry.
+              No exit wait or animation-dependent form lock.
+            */}
+            <motion.section
+              key={step}
+              initial={reducedMotion ? false : { x: 10 }}
+              animate={{ x: 0 }}
               transition={{ duration }}
-              className="overflow-hidden"
+              className="min-w-0"
             >
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.section
-                  key={step}
-                  initial={{
-                    opacity: reducedMotion ? 1 : 0,
-                    x: reducedMotion ? 0 : direction * 14,
-                  }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{
-                    opacity: reducedMotion ? 1 : 0,
-                    x: reducedMotion ? 0 : direction * -14,
-                  }}
-                  transition={{ duration }}
-                  onAnimationComplete={finishTransition}
-                  className="pb-2"
-                >
-                  <h2
-                    ref={headingRef}
-                    tabIndex={-1}
-                    className="text-2xl font-semibold tracking-tight outline-none"
-                  >
-                    {steps[step].title}
-                  </h2>
+              <h2
+                ref={headingRef}
+                tabIndex={-1}
+                className="text-2xl font-semibold tracking-tight outline-none"
+              >
+                {steps[step].title}
+              </h2>
 
-                  <p className="mt-2 text-sm leading-6 text-stone-500">
-                    {steps[step].description}
-                  </p>
+              <p className="mt-2 text-sm leading-6 text-stone-500">
+                {steps[step].description}
+              </p>
 
-                  <div className="mt-7 space-y-6">
-                    {step === 0 && (
-                      <>
-                        <div>
-                          <label
-                            htmlFor="full_name"
-                            className="text-sm font-semibold"
-                          >
-                            Full name
-                          </label>
+              <div className="mt-7 space-y-6">
+                {step === 0 && (
+                  <>
+                    <TextField
+                      name="full_name"
+                      label="Full name"
+                      value={values.full_name}
+                      placeholder="What should we call you?"
+                      maxLength={100}
+                      autoComplete="name"
+                      error={errors.full_name}
+                      onChange={(value) => updateField("full_name", value)}
+                    />
 
-                          <input
-                            id="full_name"
-                            name="full_name"
-                            autoComplete="name"
-                            value={values.full_name}
-                            onChange={(event) =>
-                              updateField(
-                                "full_name",
-                                event.target.value,
-                              )
-                            }
-                            placeholder="What should we call you?"
-                            maxLength={100}
-                            required
-                            aria-invalid={!!errors.full_name}
-                            aria-describedby={
-                              errors.full_name
-                                ? "full-name-error"
-                                : undefined
-                            }
-                            className={inputStyles}
-                          />
+                    <TextField
+                      name="location"
+                      label="Where are you based?"
+                      value={values.location}
+                      placeholder="Lagos, Nigeria"
+                      maxLength={150}
+                      error={errors.location}
+                      onChange={(value) => updateField("location", value)}
+                    />
 
-                          {errors.full_name && (
-                            <p
-                              id="full-name-error"
-                              className="mt-2 text-xs text-red-700"
+                    <div className="rounded-xl bg-[#f0ebff] p-4">
+                      <p className="text-sm font-medium">
+                        A profile that grows with you.
+                      </p>
+
+                      <p className="mt-1 text-xs leading-6 text-stone-600">
+                        Update your details whenever your goals change.
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                {step === 1 && (
+                  <>
+                    <TextField
+                      name="target_role"
+                      label="What role are you looking for?"
+                      value={values.target_role}
+                      placeholder="Frontend Developer"
+                      maxLength={150}
+                      error={errors.target_role}
+                      onChange={(value) => updateField("target_role", value)}
+                    />
+
+                    <div>
+                      <label
+                        htmlFor="skill-input"
+                        className="text-sm font-semibold"
+                      >
+                        Your skills
+                      </label>
+
+                      <div className="mt-2 flex gap-2">
+                        <input
+                          ref={skillInputRef}
+                          id="skill-input"
+                          value={skillDraft}
+                          onChange={(event) => {
+                            setSkillDraft(event.target.value);
+                            setErrors((previous) => ({
+                              ...previous,
+                              skills: undefined,
+                            }));
+                            setMessage("");
+                          }}
+                          onKeyDown={handleSkillKeyDown}
+                          placeholder="Add a skill"
+                          maxLength={2000}
+                          aria-invalid={!!errors.skills}
+                          aria-describedby={
+                            errors.skills
+                              ? "skills-help skills-error"
+                              : "skills-help"
+                          }
+                          className={`${inputStyles} mt-0 min-w-0`}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={addSkills}
+                          disabled={!skillDraft.trim()}
+                          className="shrink-0 rounded-xl bg-[#242332] px-4 text-sm font-medium text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-600 disabled:opacity-40"
+                        >
+                          Add
+                        </button>
+                      </div>
+
+                      <p
+                        id="skills-help"
+                        className="mt-2 text-xs leading-5 text-stone-500"
+                      >
+                        Press Enter or use commas. Up to 30 skills.
+                      </p>
+
+                      <ul className="mt-4 flex flex-wrap gap-2">
+                        <AnimatePresence initial={false}>
+                          {values.skills.map((skill) => (
+                            <motion.li
+                              key={skill}
+                              initial={
+                                reducedMotion
+                                  ? false
+                                  : { opacity: 0, scale: 0.95 }
+                              }
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={
+                                reducedMotion
+                                  ? undefined
+                                  : { opacity: 0, scale: 0.95 }
+                              }
+                              transition={{ duration }}
+                              className="flex max-w-full items-center gap-1 rounded-xl bg-[#edf5ce] py-1 pl-3 pr-1 text-sm"
                             >
-                              {errors.full_name}
-                            </p>
-                          )}
-                        </div>
+                              <span className="break-words">{skill}</span>
 
-                        <div>
-                          <label
-                            htmlFor="location"
-                            className="text-sm font-semibold"
-                          >
-                            Where are you based?
-                          </label>
-
-                          <input
-                            id="location"
-                            name="location"
-                            value={values.location}
-                            onChange={(event) =>
-                              updateField(
-                                "location",
-                                event.target.value,
-                              )
-                            }
-                            placeholder="Lagos, Nigeria"
-                            maxLength={150}
-                            required
-                            aria-invalid={!!errors.location}
-                            aria-describedby={
-                              errors.location
-                                ? "location-error"
-                                : undefined
-                            }
-                            className={inputStyles}
-                          />
-
-                          {errors.location && (
-                            <p
-                              id="location-error"
-                              className="mt-2 text-xs text-red-700"
-                            >
-                              {errors.location}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="rounded-xl bg-[#f0ebff] p-4">
-                          <p className="text-sm font-medium">
-                            A profile that grows with you.
-                          </p>
-                          <p className="mt-1 text-xs leading-6 text-stone-600">
-                            You can update your details whenever
-                            your goals change.
-                          </p>
-                        </div>
-                      </>
-                    )}
-
-                    {step === 1 && (
-                      <>
-                        <div>
-                          <label
-                            htmlFor="target_role"
-                            className="text-sm font-semibold"
-                          >
-                            What role are you looking for?
-                          </label>
-
-                          <input
-                            id="target_role"
-                            name="target_role"
-                            value={values.target_role}
-                            onChange={(event) =>
-                              updateField(
-                                "target_role",
-                                event.target.value,
-                              )
-                            }
-                            placeholder="Frontend Developer"
-                            maxLength={150}
-                            required
-                            aria-invalid={!!errors.target_role}
-                            aria-describedby={
-                              errors.target_role
-                                ? "target-role-error"
-                                : undefined
-                            }
-                            className={inputStyles}
-                          />
-
-                          {errors.target_role && (
-                            <p
-                              id="target-role-error"
-                              className="mt-2 text-xs text-red-700"
-                            >
-                              {errors.target_role}
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label
-                            htmlFor="skill-input"
-                            className="text-sm font-semibold"
-                          >
-                            Your skills
-                          </label>
-
-                          <div className="mt-2 flex gap-2">
-                            <input
-                              ref={skillInputRef}
-                              id="skill-input"
-                              value={skillDraft}
-                              onChange={(event) => {
-                                setSkillDraft(event.target.value);
-                                setErrors((previous) => ({
-                                  ...previous,
-                                  skills: undefined,
-                                }));
-                              }}
-                              onKeyDown={handleSkillKeyDown}
-                              placeholder="Add a skill"
-                              maxLength={2000}
-                              aria-invalid={!!errors.skills}
-                              aria-describedby={`skills-help${
-                                errors.skills
-                                  ? " skills-error"
-                                  : ""
-                              }`}
-                              className={`${inputStyles} mt-0 min-w-0`}
-                            />
-
-                            <button
-                              type="button"
-                              onClick={addSkills}
-                              disabled={!skillDraft.trim()}
-                              className="shrink-0 rounded-xl bg-[#242332] px-4 text-sm font-medium text-white disabled:opacity-40"
-                            >
-                              Add
-                            </button>
-                          </div>
-
-                          <p
-                            id="skills-help"
-                            className="mt-2 text-xs leading-5 text-stone-500"
-                          >
-                            Press Enter or use commas. Up to 30
-                            skills.
-                          </p>
-
-                          <ul className="mt-4 flex flex-wrap gap-2">
-                            {values.skills.map((skill) => (
-                              <motion.li
-                                key={skill}
-                                layout={!reducedMotion}
-                                initial={
-                                  reducedMotion
-                                    ? false
-                                    : { opacity: 0, scale: 0.95 }
+                              <button
+                                type="button"
+                                aria-label={`Remove ${skill}`}
+                                onClick={() =>
+                                  updateField(
+                                    "skills",
+                                    values.skills.filter(
+                                      (item) => item !== skill,
+                                    ),
+                                  )
                                 }
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ duration }}
-                                className="flex max-w-full items-center gap-1 rounded-xl bg-[#edf5ce] py-1 pl-3 pr-1 text-sm"
+                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-violet-600"
                               >
-                                <span className="break-words">
-                                  {skill}
-                                </span>
+                                <span aria-hidden="true">×</span>
+                              </button>
+                            </motion.li>
+                          ))}
+                        </AnimatePresence>
+                      </ul>
 
-                                <button
-                                  type="button"
-                                  aria-label={`Remove ${skill}`}
-                                  onClick={() =>
-                                    updateField(
-                                      "skills",
-                                      values.skills.filter(
-                                        (item) => item !== skill,
-                                      ),
-                                    )
-                                  }
-                                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg hover:bg-black/5 focus-visible:outline-2 focus-visible:outline-violet-600"
-                                >
-                                  <span aria-hidden="true">×</span>
-                                </button>
-                              </motion.li>
-                            ))}
-                          </ul>
-
-                          {errors.skills && (
-                            <p
-                              id="skills-error"
-                              className="mt-2 text-xs text-red-700"
-                            >
-                              {errors.skills}
-                            </p>
-                          )}
-                        </div>
-
-                        <ChoiceGroup
-                          name="experience_level"
-                          label="Experience level"
-                          value={values.experience_level}
-                          options={experienceOptions}
-                          error={errors.experience_level}
-                          onChange={(value) =>
-                            updateField("experience_level", value)
-                          }
-                        />
-                      </>
-                    )}
-
-                    {step === 2 && (
-                      <>
-                        <ChoiceGroup
-                          name="work_arrangement"
-                          label="Where would you like to work?"
-                          value={values.work_arrangement}
-                          options={workOptions}
-                          error={errors.work_arrangement}
-                          onChange={(value) =>
-                            updateField("work_arrangement", value)
-                          }
-                        />
-
-                        <ChoiceGroup
-                          name="employment_type"
-                          label="Preferred employment type"
-                          value={values.employment_type}
-                          options={employmentOptions}
-                          error={errors.employment_type}
-                          onChange={(value) =>
-                            updateField("employment_type", value)
-                          }
-                        />
-
-                        <p className="rounded-xl bg-[#f0ebff] p-4 text-xs leading-6 text-stone-600">
-                          These preferences will guide future job
-                          recommendations. You can change them later.
+                      {errors.skills && (
+                        <p
+                          id="skills-error"
+                          className="mt-2 text-xs text-red-700"
+                        >
+                          {errors.skills}
                         </p>
-                      </>
-                    )}
-                  </div>
-                </motion.section>
-              </AnimatePresence>
-            </motion.div>
+                      )}
+                    </div>
+
+                    <ChoiceGroup
+                      name="experience_level"
+                      label="Experience level"
+                      value={values.experience_level}
+                      options={experienceOptions}
+                      error={errors.experience_level}
+                      onChange={(value) =>
+                        updateField("experience_level", value)
+                      }
+                    />
+                  </>
+                )}
+
+                {step === 2 && (
+                  <>
+                    <ChoiceGroup
+                      name="work_arrangement"
+                      label="Where would you like to work?"
+                      value={values.work_arrangement}
+                      options={workOptions}
+                      error={errors.work_arrangement}
+                      onChange={(value) =>
+                        updateField("work_arrangement", value)
+                      }
+                    />
+
+                    <ChoiceGroup
+                      name="employment_type"
+                      label="Preferred employment type"
+                      value={values.employment_type}
+                      options={employmentOptions}
+                      error={errors.employment_type}
+                      onChange={(value) =>
+                        updateField("employment_type", value)
+                      }
+                    />
+
+                    <p className="rounded-xl bg-[#f0ebff] p-4 text-xs leading-6 text-stone-600">
+                      These preferences will guide future job recommendations.
+                      You can change them later.
+                    </p>
+                  </>
+                )}
+              </div>
+            </motion.section>
 
             <div className="mt-8 flex items-center justify-between gap-3 border-t border-stone-100 pt-6">
               <button
                 type="button"
-                onClick={() => goToStep(step - 1)}
+                onClick={goBack}
                 disabled={step === 0}
-                className="rounded-full px-4 py-3 text-sm font-medium text-stone-600 hover:bg-stone-100 disabled:invisible"
+                className="min-h-12 rounded-full px-4 py-3 text-sm font-medium text-stone-600 hover:bg-stone-100 focus-visible:outline-2 focus-visible:outline-violet-600 disabled:invisible"
               >
                 ← Back
               </button>
 
               <motion.button
                 type="submit"
-                whileTap={
-                  reducedMotion ? undefined : { scale: 0.98 }
-                }
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#242332] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#39364e] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-600 disabled:opacity-60"
+                whileTap={reducedMotion ? undefined : { scale: 0.98 }}
+                className={primaryButtonStyles}
               >
                 {isSaving ? (
                   <>
@@ -922,12 +885,11 @@ export default function OnboardingForm({
             {message}
           </p>
 
-          <p className="mt-2 text-xs text-stone-500">
+          <p className="mt-2 text-xs leading-5 text-stone-500">
             Changes are saved when you select “Save my profile”.
           </p>
         </form>
 
-        {/* Desktop preview */}
         <aside className="sticky top-8 hidden overflow-hidden rounded-2xl bg-[#242332] p-5 text-white min-[1100px]:block">
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#d8f275]">
             Your profile preview
@@ -937,15 +899,7 @@ export default function OnboardingForm({
             aria-hidden="true"
             className="mt-7 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#d8f275] text-lg font-semibold text-[#242332]"
           >
-            {values.full_name.trim()
-              ? values.full_name
-                  .trim()
-                  .split(/\s+/)
-                  .slice(0, 2)
-                  .map((part) => part[0])
-                  .join("")
-                  .toUpperCase()
-              : "JP"}
+            {initials}
           </div>
 
           <h3 className="mt-4 break-words text-lg font-semibold">
@@ -961,9 +915,7 @@ export default function OnboardingForm({
           </p>
 
           <div className="mt-6 border-t border-white/10 pt-5">
-            <p className="text-xs text-white/60">
-              Your strengths
-            </p>
+            <p className="text-xs text-white/60">Your strengths</p>
 
             <ul className="mt-3 flex flex-wrap gap-2">
               {values.skills.slice(0, 6).map((skill) => (
@@ -999,8 +951,7 @@ export default function OnboardingForm({
 
           <p className="mt-7 text-xs leading-6 text-white/50">
             A little clarity today.
-            <br />
-            A better opportunity tomorrow.
+            <br />A better opportunity tomorrow.
           </p>
         </aside>
       </div>

@@ -33,3 +33,21 @@ body {
     opacity: 0.75;
   }
 }
+
+@keyframes jobplex-menu-enter {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .jobplex-mobile-menu[open] .jobplex-mobile-menu-panel {
+    animation: jobplex-menu-enter 220ms ease-out both;
+  }
+}
