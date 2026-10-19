@@ -15,7 +15,7 @@ const navigation = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/onboarding", label: "My profile" },
   { href: "#skills", label: "My skills" },
-  { href: "#opportunities", label: "Opportunities" },
+  { href: "/jobs", label: "Opportunities" },
 ];
 
 export default function MobileHeader({
