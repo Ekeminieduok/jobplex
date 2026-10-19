@@ -8,6 +8,9 @@ import LogoutButton from "@/components/auth/logout-button";
 import ProfilePhoto from "@/components/dashboard/profile-photo";
 import { createClient } from "@/lib/supabase/server";
 import MobileHeader from "@/components/dashboard/mobile-header";
+import CompanyLogo from "@/components/jobs/company-logo";
+import { getProfileJobs } from "@/lib/jobs/profile-jobs";
+import type { LiveJob } from "@/lib/jobs/jsearch";
 
 export const metadata: Metadata = {
   title: "Dashboard | Job Plex",
@@ -38,13 +41,7 @@ function Icon({
   name,
   className = "h-5 w-5",
 }: {
-  name:
-    | "dashboard"
-    | "profile"
-    | "briefcase"
-    | "skills"
-    | "location"
-    | "arrow";
+  name: "dashboard" | "profile" | "briefcase" | "skills" | "location" | "arrow";
   className?: string;
 }) {
   const paths: Record<typeof name, ReactNode> = {
@@ -125,9 +122,7 @@ function SummaryCard({
         {value}
       </p>
 
-      <p className="mt-2 text-xs leading-5 text-stone-500">
-        {detail}
-      </p>
+      <p className="mt-2 text-xs leading-5 text-stone-500">{detail}</p>
     </div>
   );
 }
@@ -135,8 +130,7 @@ function SummaryCard({
 async function DashboardContent() {
   const supabase = await createClient();
 
-  const { data: auth, error: authError } =
-    await supabase.auth.getClaims();
+  const { data: auth, error: authError } = await supabase.auth.getClaims();
 
   const userId = auth?.claims?.sub;
 
@@ -159,6 +153,20 @@ async function DashboardContent() {
   if (!profile) {
     redirect("/onboarding");
   }
+  let opportunities: LiveJob[] = [];
+  let opportunitiesFailed = false;
+
+  try {
+    const jobs = await getProfileJobs(profile);
+    opportunities = jobs.slice(0, 3);
+  } catch (error) {
+    opportunitiesFailed = true;
+
+    console.error(
+      "[Job Plex] Dashboard opportunities failed:",
+      error instanceof Error ? error.message : "Unknown error",
+    );
+  }
 
   const { data: photo } = await supabase.storage
     .from("profile-photos")
@@ -173,25 +181,19 @@ async function DashboardContent() {
   const preferences = [
     {
       title: "Experience level",
-      value:
-        labels[profile.experience_level] ??
-        profile.experience_level,
+      value: labels[profile.experience_level] ?? profile.experience_level,
       color: "bg-[#fce8dc]",
       icon: "profile" as const,
     },
     {
       title: "Work arrangement",
-      value:
-        labels[profile.work_arrangement] ??
-        profile.work_arrangement,
+      value: labels[profile.work_arrangement] ?? profile.work_arrangement,
       color: "bg-[#e9e5fc]",
       icon: "location" as const,
     },
     {
       title: "Employment type",
-      value:
-        labels[profile.employment_type] ??
-        profile.employment_type,
+      value: labels[profile.employment_type] ?? profile.employment_type,
       color: "bg-[#edf5ce]",
       icon: "briefcase" as const,
     },
@@ -200,28 +202,25 @@ async function DashboardContent() {
   return (
     <div className="min-h-screen bg-[#f6f6f4] text-[#242332] lg:bg-[#c5b2f5] lg:p-7">
       <div className="mx-auto min-h-screen max-w-[1540px] bg-[#f6f6f4] lg:grid lg:min-h-[calc(100vh-56px)] lg:grid-cols-[210px_minmax(0,1fr)] lg:rounded-[30px]">
-  <MobileHeader
-    name={profile.full_name}
-    photoUrl={photoUrl}
-  />
+        <MobileHeader name={profile.full_name} photoUrl={photoUrl} />
         {/* Sidebar */}
-     <aside className="hidden p-3 pr-0 lg:block">
+        <aside className="hidden p-3 pr-0 lg:block">
           <div className="flex h-full flex-col rounded-[22px] bg-[#222131] px-4 py-5 text-white">
             {/* Visually crops the padding inside the existing logo */}
-           <Link
-  href="/dashboard"
-  aria-label="Job Plex dashboard"
-  className="relative mb-6 block h-12 w-40 shrink-0 overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d8f275]"
->
-  <Image
-    src="/images/jobplexlogo.png"
-    alt="Job Plex"
-    width={200}
-    height={200}
-    priority
-    className="pointer-events-none absolute -left-5 -top-[76px] h-[200px] w-[200px] max-w-none brightness-0 invert"
-  />
-</Link>
+            <Link
+              href="/dashboard"
+              aria-label="Job Plex dashboard"
+              className="relative mb-6 block h-12 w-40 shrink-0 overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d8f275]"
+            >
+              <Image
+                src="/images/jobplexlogo.png"
+                alt="Job Plex"
+                width={200}
+                height={200}
+                priority
+                className="pointer-events-none absolute -left-5 -top-[76px] h-[200px] w-[200px] max-w-none brightness-0 invert"
+              />
+            </Link>
 
             <nav
               aria-label="Main navigation"
@@ -253,7 +252,7 @@ async function DashboardContent() {
               </a>
 
               <a
-                href="#opportunities"
+                href="/jobs"
                 className="flex items-center gap-3 rounded-full px-4 py-3 text-sm text-white/80 transition hover:bg-white/10 hover:text-white"
               >
                 <Icon name="briefcase" />
@@ -303,8 +302,8 @@ async function DashboardContent() {
             </div>
 
             <div className="hidden lg:block">
-  <LogoutButton />
-</div>
+              <LogoutButton />
+            </div>
           </header>
 
           <div className="mt-7 grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_290px]">
@@ -312,10 +311,7 @@ async function DashboardContent() {
             <div className="flex min-w-0 flex-col gap-5">
               <section aria-labelledby="overview-title">
                 <div className="mb-4 flex items-center justify-between gap-3">
-                  <h2
-                    id="overview-title"
-                    className="text-base font-semibold"
-                  >
+                  <h2 id="overview-title" className="text-base font-semibold">
                     Your career overview
                   </h2>
 
@@ -354,16 +350,11 @@ async function DashboardContent() {
                 </div>
               </section>
 
-             <div className="order-3 grid items-start gap-5 md:grid-cols-2 xl:order-none">
+              <div className="order-3 grid items-start gap-5 md:grid-cols-2 xl:order-none">
                 {/* Profile */}
-                <section className={`${panel} scroll-mt-24`}
-                id="my-profile"
-                
-                >
+                <section className={`${panel} scroll-mt-24`} id="my-profile">
                   <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-base font-semibold">
-                      My profile
-                    </h2>
+                    <h2 className="text-base font-semibold">My profile</h2>
 
                     <span className="rounded-full bg-[#edf5ce] px-2.5 py-1 text-[11px] font-medium text-[#586b23]">
                       Saved
@@ -400,23 +391,15 @@ async function DashboardContent() {
 
                 {/* Preferences */}
                 <section className={panel}>
-                  <h2 className="text-base font-semibold">
-                    Work preferences
-                  </h2>
+                  <h2 className="text-base font-semibold">Work preferences</h2>
 
                   <dl className="mt-5 space-y-5">
                     {preferences.map((item) => (
-                      <div
-                        key={item.title}
-                        className="flex items-center gap-3"
-                      >
+                      <div key={item.title} className="flex items-center gap-3">
                         <div
                           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.color}`}
                         >
-                          <Icon
-                            name={item.icon}
-                            className="h-4 w-4"
-                          />
+                          <Icon name={item.icon} className="h-4 w-4" />
                         </div>
 
                         <div className="min-w-0">
@@ -443,14 +426,9 @@ async function DashboardContent() {
               </div>
 
               {/* Skills */}
-              <section
-                id="skills"
-                className={`${panel} scroll-mt-6`}
-              >
+              <section id="skills" className={`${panel} scroll-mt-6`}>
                 <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-base font-semibold">
-                    Skills you bring
-                  </h2>
+                  <h2 className="text-base font-semibold">Skills you bring</h2>
 
                   <span className="text-xs text-stone-500">
                     {profile.skills.length} added
@@ -458,53 +436,153 @@ async function DashboardContent() {
                 </div>
 
                 <ul className="mt-5 flex flex-wrap gap-2">
-                  {profile.skills.map(
-                    (skill: string, index: number) => (
-                      <li
-                        key={skill}
-                        className={`max-w-full break-words rounded-xl px-4 py-2.5 text-sm font-medium ${
-                          index % 3 === 0
-                            ? "bg-[#edf5ce]"
-                            : index % 3 === 1
-                              ? "bg-[#e9e5fc]"
-                              : "bg-[#fce8dc]"
-                        }`}
-                      >
-                        {skill}
-                      </li>
-                    ),
-                  )}
+                  {profile.skills.map((skill: string, index: number) => (
+                    <li
+                      key={skill}
+                      className={`max-w-full break-words rounded-xl px-4 py-2.5 text-sm font-medium ${
+                        index % 3 === 0
+                          ? "bg-[#edf5ce]"
+                          : index % 3 === 1
+                            ? "bg-[#e9e5fc]"
+                            : "bg-[#fce8dc]"
+                      }`}
+                    >
+                      {skill}
+                    </li>
+                  ))}
                 </ul>
               </section>
 
               {/* Job discovery */}
               <section
-                 id="opportunities"
-                className={`${panel} order-2 scroll-mt-24 xl:order-none`}
+                id="opportunities"
+                className="order-last min-w-0 scroll-mt-24 rounded-3xl border border-stone-200 bg-white p-5 sm:p-6 lg:order-2"
               >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h2 className="text-base font-semibold">
-                    Opportunities for you
-                  </h2>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-[#242332]">
+                      Opportunities for you
+                    </h2>
 
-                  <span className="rounded-full bg-[#f2f2f6] px-3 py-1 text-[11px] text-stone-500">
-                    Coming next
-                  </span>
-                </div>
-
-                <div className="mt-5 flex flex-col items-center rounded-xl border border-dashed border-stone-200 px-5 py-8 text-center">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#edf5ce]">
-                    <Icon name="briefcase" />
+                    <p className="mt-1 text-sm leading-6 text-stone-500">
+                      Based on your target role, location and skills.
+                    </p>
                   </div>
 
-                  <h3 className="mt-4 text-sm font-semibold">
-                    Your next opportunity starts here
-                  </h3>
+                  <Link
+                    href="/jobs"
+                    className="shrink-0 rounded-full bg-[#d8f275] px-4 py-2 text-xs font-semibold text-[#242332] transition hover:bg-[#cbe660] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-600"
+                  >
+                    Browse all ↗
+                  </Link>
+                </div>
 
-                  <p className="mt-2 max-w-sm text-xs leading-6 text-stone-500">
-                    Job listings and match explanations will appear
-                    here once job discovery is connected.
-                  </p>
+                <div className="mt-5">
+                  {opportunitiesFailed ? (
+                    <div role="status" className="rounded-2xl bg-stone-50 p-5">
+                      <p className="text-sm font-medium text-[#242332]">
+                        Opportunities couldn’t load
+                      </p>
+
+                      <p className="mt-2 text-sm leading-6 text-stone-500">
+                        Please try the jobs page again shortly.
+                      </p>
+
+                      <Link
+                        href="/jobs"
+                        className="mt-3 inline-block text-sm font-semibold text-violet-700 underline underline-offset-4"
+                      >
+                        Open jobs
+                      </Link>
+                    </div>
+                  ) : opportunities.length === 0 ? (
+                    <div className="rounded-2xl bg-stone-50 p-5">
+                      <p className="text-sm font-medium text-[#242332]">
+                        No opportunities found yet
+                      </p>
+
+                      <p className="mt-2 text-sm leading-6 text-stone-500">
+                        Review your target role and location to help us find
+                        relevant openings.
+                      </p>
+
+                      <Link
+                        href="/onboarding"
+                        className="mt-3 inline-block text-sm font-semibold text-violet-700 underline underline-offset-4"
+                      >
+                        Review your profile
+                      </Link>
+                    </div>
+                  ) : (
+                    <ul className="space-y-3">
+                      {opportunities.map((job) => (
+                        <li key={job.id}>
+                          <article className="min-w-0 rounded-2xl border border-stone-200 p-4 transition hover:border-violet-300">
+                            <div className="flex items-start gap-3">
+                              <div className="shrink-0">
+                                <CompanyLogo
+                                  company={job.company}
+                                  src={job.logoUrl}
+                                />
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <p className="break-words text-xs text-stone-500">
+                                  {job.company}
+                                </p>
+
+                                <h3 className="mt-1 break-words text-sm font-semibold leading-6 text-[#242332]">
+                                  {job.title}
+                                </h3>
+
+                                <p className="mt-1 break-words text-xs leading-5 text-stone-500">
+                                  {job.location}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              <span className="rounded-full bg-stone-100 px-2.5 py-1 text-xs text-stone-600">
+                                {job.employment}
+                              </span>
+
+                              {job.remote && (
+                                <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs text-violet-800">
+                                  Remote
+                                </span>
+                              )}
+
+                              {job.searchScope === "nationwide" && (
+                                <span className="rounded-full bg-lime-100 px-2.5 py-1 text-xs text-lime-900">
+                                  Across Nigeria
+                                </span>
+                              )}
+                            </div>
+
+                            <p className="mt-3 break-words text-xs text-stone-500">
+                              Source: {job.source}
+                            </p>
+
+                            {job.applyUrl ? (
+                              <a
+                                href={job.applyUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label={`View and apply for ${job.title} at ${job.company} (opens in a new tab)`}
+                                className="mt-3 inline-flex w-full items-center justify-center rounded-xl bg-[#242332] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-violet-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-600"
+                              >
+                                View & apply ↗
+                              </a>
+                            ) : (
+                              <p className="mt-3 text-xs text-stone-500">
+                                Application link unavailable
+                              </p>
+                            )}
+                          </article>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </section>
             </div>
@@ -543,8 +621,7 @@ async function DashboardContent() {
                   </h2>
 
                   <p className="mt-3 max-w-[210px] text-xs leading-6 text-white/65">
-                    Make sure your profile reflects where you want
-                    to go next.
+                    Make sure your profile reflects where you want to go next.
                   </p>
 
                   <Link
@@ -558,9 +635,7 @@ async function DashboardContent() {
               </section>
 
               <section className={panel}>
-                <h2 className="text-base font-semibold">
-                  Your career focus
-                </h2>
+                <h2 className="text-base font-semibold">Your career focus</h2>
 
                 <p className="mt-2 text-xs leading-6 text-stone-500">
                   A quick snapshot of what you’re looking for.
@@ -590,9 +665,7 @@ async function DashboardContent() {
               </section>
 
               <section className={panel}>
-                <h2 className="text-base font-semibold">
-                  Next steps
-                </h2>
+                <h2 className="text-base font-semibold">Next steps</h2>
 
                 <div className="mt-5 space-y-4">
                   <div className="flex items-start gap-3">
@@ -639,11 +712,7 @@ async function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <Suspense
-      fallback={
-        <PageLoader message="Preparing your dashboard…" />
-      }
-    >
+    <Suspense fallback={<PageLoader message="Preparing your dashboard…" />}>
       <DashboardContent />
     </Suspense>
   );
