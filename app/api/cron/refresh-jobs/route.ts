@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { refreshStoredSearch } from "@/lib/jobs/stored-search";
 
-export const runtime = "nodejs";
+
 export const maxDuration = 180;
 
 export async function GET(request: Request) {
