@@ -34,7 +34,9 @@ export async function refreshStoredSearch(
   query: string,
 ): Promise<LiveJob[]> {
   const normalized = normalizeQuery(query);
-  const jobs = await searchJobs(normalized);
+  const jobs = await searchJobs(normalized, {
+  requireComplete: true,
+});
   const supabase = createAdminClient();
 
   const { error } = await supabase.rpc("save_job_search", {

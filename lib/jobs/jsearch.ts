@@ -18,11 +18,8 @@ export type LiveJob = {
 const TARGET_JOB_COUNT = 15;
 const MAX_PAGES = 3;
 
-
 function asObject(value: unknown): Record<string, unknown> {
-  return typeof value === "object" &&
-    value !== null &&
-    !Array.isArray(value)
+  return typeof value === "object" && value !== null && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {};
 }
@@ -73,9 +70,7 @@ function postingDate(item: Record<string, unknown>): string | undefined {
 
 // Remove common tracking parameters while retaining parameters
 // that may identify the vacancy itself.
-export function applicationKey(
-  value: string | undefined,
-): string | undefined {
+export function applicationKey(value: string | undefined): string | undefined {
   if (!value) return undefined;
 
   const url = new URL(value);
@@ -109,11 +104,7 @@ function normalizeJob(value: unknown): LiveJob | null {
     company: asText(item.employer_name) || "Company not specified",
     location:
       asText(item.job_location) ||
-      [
-        asText(item.job_city),
-        asText(item.job_state),
-        asText(item.job_country),
-      ]
+      [asText(item.job_city), asText(item.job_state), asText(item.job_country)]
         .filter(Boolean)
         .join(", ") ||
       "Location not specified",
@@ -121,8 +112,7 @@ function normalizeJob(value: unknown): LiveJob | null {
     applyUrl: safeUrl(item.job_apply_link),
     description: asText(item.job_description),
     employment:
-      asText(item.job_employment_type) ||
-      "Employment type not specified",
+      asText(item.job_employment_type) || "Employment type not specified",
     remote: item.job_is_remote === true,
     source: asText(item.job_publisher) || "Original listing",
     postedAt: postingDate(item),
@@ -134,9 +124,7 @@ async function fetchPage(
   apiKey: string,
   cursor?: string,
 ): Promise<{ items: unknown[]; nextCursor?: string }> {
-  const url = new URL(
-    "https://api.openwebninja.com/jsearch/search-v2",
-  );
+  const url = new URL("https://api.openwebninja.com/jsearch/search-v2");
 
   url.searchParams.set("query", query);
   url.searchParams.set("country", "ng");
@@ -144,6 +132,7 @@ async function fetchPage(
   if (cursor) {
     url.searchParams.set("cursor", cursor);
   }
+ 
 
   const response = await fetch(url, {
     headers: {
@@ -154,17 +143,13 @@ async function fetchPage(
   });
 
   if (!response.ok) {
-    throw new Error(
-      `Job provider request failed (${response.status})`,
-    );
+    throw new Error(`Job provider request failed (${response.status})`);
   }
 
   const payload = asObject(await response.json());
   const data = asObject(payload.data);
 
-  const items: unknown = Array.isArray(payload.data)
-    ? payload.data
-    : data.jobs;
+  const items: unknown = Array.isArray(payload.data) ? payload.data : data.jobs;
 
   if (
     (typeof payload.status === "string" && payload.status !== "OK") ||
@@ -179,41 +164,41 @@ async function fetchPage(
     );
   }
   if (process.env.NODE_ENV === "development") {
-  const dateSamples = items.map((value) => {
-    const job = asObject(value);
+    const dateSamples = items.map((value) => {
+      const job = asObject(value);
 
-    return {
-      title: asText(job.job_title),
-      parsedDate: postingDate(job) ?? null,
-      dateFields: Object.fromEntries(
-        Object.entries(job).filter(([key]) =>
-          /date|posted|time|expir/i.test(key),
+      return {
+        title: asText(job.job_title),
+        parsedDate: postingDate(job) ?? null,
+        dateFields: Object.fromEntries(
+          Object.entries(job).filter(([key]) =>
+            /date|posted|time|expir/i.test(key),
+          ),
         ),
-      ),
-    };
-  });
+      };
+    });
 
-  console.info(
-    "[JSearch] Posting dates:",
-    JSON.stringify(dateSamples, null, 2),
-  );
-}
+    console.info(
+      "[JSearch] Posting dates:",
+      JSON.stringify(dateSamples, null, 2),
+    );
+  }
 
-    if (process.env.NODE_ENV === "development") {
-  console.info("[JSearch] Pagination:", {
-    received: items.length,
-    hasNextPage: Boolean(asText(data.cursor)),
-  });
-}
+  if (process.env.NODE_ENV === "development") {
+    console.info("[JSearch] Pagination:", {
+      received: items.length,
+      hasNextPage: Boolean(asText(data.cursor)),
+    });
+  }
 
   return {
     items,
     nextCursor: asText(data.cursor) || undefined,
   };
 }
-
 export async function searchJobs(
   query = "jobs in Nigeria",
+  options: { requireComplete?: boolean } = {},
 ): Promise<LiveJob[]> {
   const apiKey = process.env.JSEARCH_API_KEY;
 
@@ -267,12 +252,12 @@ export async function searchJobs(
       seenCursors.add(nextCursor);
       cursor = nextCursor;
     } catch (error) {
-      // Surface failures when we have no usable listings.
-      if (jobs.size === 0) {
+      // Database imports must not save a partially fetched batch.
+      if (options.requireComplete || jobs.size === 0) {
         throw error;
       }
 
-      // Preserve successful pages if a subsequent request fails.
+      // Other callers may still choose to display successful pages.
       if (process.env.NODE_ENV === "development") {
         console.warn(
           "[JSearch] Additional page unavailable; keeping fetched jobs:",
