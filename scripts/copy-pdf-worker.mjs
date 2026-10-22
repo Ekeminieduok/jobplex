@@ -5,14 +5,19 @@ import path from "node:path";
 const require = createRequire(import.meta.url);
 
 const worker = require.resolve(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
+  "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
 );
 
-const destination = path.join(process.cwd(), "public", "pdfjs");
+const destination = path.join(
+  process.cwd(),
+  "public",
+  "pdfjs",
+);
 
 await mkdir(destination, { recursive: true });
 
 await copyFile(
   worker,
-  path.join(destination, "pdf.worker.min.mjs"),
+  path.join(destination, "pdf.worker.legacy.min.mjs"),
 );
+
