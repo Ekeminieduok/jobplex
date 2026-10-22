@@ -111,10 +111,12 @@ export default function ResumeSearchPanel({
       }
 
       // Imported only after the user clicks the analysis button.
-      const pdfjs = await import("pdfjs-dist");
+     const pdfjs = await import(
+  "pdfjs-dist/legacy/build/pdf.mjs"
+);
 
-      pdfjs.GlobalWorkerOptions.workerSrc =
-        `/pdfjs/pdf.worker.min.mjs?v=${pdfjs.version}`;
+pdfjs.GlobalWorkerOptions.workerSrc =
+  `/pdfjs/pdf.worker.legacy.min.mjs?v=${pdfjs.version}`;
 
       const task = pdfjs.getDocument({
         data: bytes,
