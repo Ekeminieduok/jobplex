@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+
+import GoogleSignInButton from "@/components/auth/google-sign-in-button";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -12,6 +14,18 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+
+    if (url.searchParams.get("auth_error") === "callback_failed") {
+      // This effect initializes the form message from the OAuth callback URL.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setMessage(
+        "Sign-in could not be completed. Please try again. If you used an email link, open the newest one in the browser where you started.",
+      );
+    }
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -84,6 +98,14 @@ export default function LoginForm() {
           Sign in to continue your next chapter.
         </p>
 
+        <GoogleSignInButton disabled={isSubmitting} />
+
+        <div className="my-6 flex items-center gap-3">
+          <div className="h-px flex-1 bg-stone-200" />
+          <span className="text-xs text-stone-500">or use your email</span>
+          <div className="h-px flex-1 bg-stone-200" />
+        </div>
+
         <form
           onSubmit={handleSubmit}
           aria-busy={isSubmitting}
@@ -141,6 +163,15 @@ export default function LoginForm() {
                 {showPassword ? "Hide" : "Show"}
               </button>
             </div>
+          </div>
+
+          <div className="flex justify-end">
+            <Link
+              href="/forgot-password"
+              className="inline-flex min-h-11 items-center text-sm font-semibold text-violet-700 underline underline-offset-4"
+            >
+              Forgot password?
+            </Link>
           </div>
 
           <button

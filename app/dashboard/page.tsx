@@ -129,6 +129,160 @@ function SummaryCard({
   );
 }
 
+async function DashboardOpportunities({
+  profile,
+}: {
+  profile: Parameters<typeof getProfileJobs>[0];
+}) {
+  let opportunities: LiveJob[] = [];
+  let opportunitiesFailed = false;
+
+  try {
+    const jobs = await getProfileJobs(profile);
+    opportunities = jobs.slice(0, 3);
+  } catch (error) {
+    opportunitiesFailed = true;
+
+    console.warn(
+      "[Job Plex] Dashboard opportunities unavailable:",
+      error instanceof Error ? error.message : "Unknown error",
+    );
+  }
+
+  return (
+    <Reveal className="order-last min-w-0 xl:order-2">
+      <section
+        id="opportunities"
+        className=" min-w-0 scroll-mt-24 rounded-3xl border border-stone-200 bg-white p-5 sm:p-6 "
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-[#242332]">
+              Opportunities for you
+            </h2>
+
+            <p className="mt-1 text-sm leading-6 text-stone-500">
+              Based on your target role, location and skills.
+            </p>
+          </div>
+
+          <Link
+            href="/jobs"
+            className="jp-action shrink-0 rounded-full bg-[#d8f275] px-4 py-2 text-xs font-semibold text-[#242332] transition hover:bg-[#cbe660] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-600"
+          >
+            Browse all ↗
+          </Link>
+        </div>
+
+        <div className="mt-5">
+          {opportunitiesFailed ? (
+            <div role="status" className="rounded-2xl bg-stone-50 p-5">
+              <p className="text-sm font-medium text-[#242332]">
+                Opportunities couldn’t load
+              </p>
+
+              <p className="mt-2 text-sm leading-6 text-stone-500">
+                Please try the jobs page again shortly.
+              </p>
+
+              <Link
+                href="/jobs"
+                className="mt-3 inline-block text-sm font-semibold text-violet-700 underline underline-offset-4"
+              >
+                Open jobs
+              </Link>
+            </div>
+          ) : opportunities.length === 0 ? (
+            <div className="rounded-2xl bg-stone-50 p-5">
+              <p className="text-sm font-medium text-[#242332]">
+                No opportunities found yet
+              </p>
+
+              <p className="mt-2 text-sm leading-6 text-stone-500">
+                Review your target role and location to help us find relevant
+                openings.
+              </p>
+
+              <Link
+                href="/onboarding"
+                className="mt-3 inline-block text-sm font-semibold text-violet-700 underline underline-offset-4"
+              >
+                Review your profile
+              </Link>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {opportunities.map((job) => (
+                <li key={job.id}>
+                  <article className="jp-card min-w-0 rounded-2xl border border-stone-200 p-4 transition hover:border-violet-300">
+                    <div className="flex items-start gap-3">
+                      <div className="shrink-0">
+                        <CompanyLogo company={job.company} src={job.logoUrl} />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="break-words text-xs text-stone-500">
+                          {job.company}
+                        </p>
+
+                        <h3 className="mt-1 break-words text-sm font-semibold leading-6 text-[#242332]">
+                          {job.title}
+                        </h3>
+
+                        <p className="mt-1 break-words text-xs leading-5 text-stone-500">
+                          {job.location}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <span className="rounded-full bg-stone-100 px-2.5 py-1 text-xs text-stone-600">
+                        {job.employment}
+                      </span>
+
+                      {job.remote && (
+                        <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs text-violet-800">
+                          Remote
+                        </span>
+                      )}
+
+                      {job.searchScope === "nationwide" && (
+                        <span className="rounded-full bg-lime-100 px-2.5 py-1 text-xs text-lime-900">
+                          Across Nigeria
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="mt-3 break-words text-xs text-stone-500">
+                      Source: {job.source}
+                    </p>
+
+                    {job.applyUrl ? (
+                      <a
+                        href={job.applyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`View and apply for ${job.title} at ${job.company} (opens in a new tab)`}
+                        className="jp-action mt-3 inline-flex w-full items-center justify-center rounded-xl bg-[#242332] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-violet-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-600"
+                      >
+                        View & apply ↗
+                      </a>
+                    ) : (
+                      <p className="mt-3 text-xs text-stone-500">
+                        Application link unavailable
+                      </p>
+                    )}
+                  </article>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+    </Reveal>
+  );
+}
+
 async function DashboardContent() {
   const supabase = await createClient();
 
@@ -154,20 +308,6 @@ async function DashboardContent() {
 
   if (!profile) {
     redirect("/onboarding");
-  }
-  let opportunities: LiveJob[] = [];
-  let opportunitiesFailed = false;
-
-  try {
-    const jobs = await getProfileJobs(profile);
-    opportunities = jobs.slice(0, 3);
-  } catch (error) {
-    opportunitiesFailed = true;
-
-    console.error(
-      "[Job Plex] Dashboard opportunities failed:",
-      error instanceof Error ? error.message : "Unknown error",
-    );
   }
 
   const { data: photo } = await supabase.storage
@@ -477,142 +617,26 @@ async function DashboardContent() {
               </Reveal>
 
               {/* Job discovery */}
-              <Reveal className="order-last min-w-0 xl:order-2">
-                <section
-                  id="opportunities"
-                  className=" min-w-0 scroll-mt-24 rounded-3xl border border-stone-200 bg-white p-5 sm:p-6 "
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <h2 className="text-lg font-semibold text-[#242332]">
+              <Suspense
+                fallback={
+                  <Reveal className="order-last min-w-0 xl:order-2">
+                    <section
+                      aria-label="Loading opportunities"
+                      className="order-last min-w-0 rounded-3xl border border-stone-200 bg-white p-5 sm:p-6 xl:order-2"
+                    >
+                      <h2 className="text-lg font-semibold">
                         Opportunities for you
                       </h2>
 
-                      <p className="mt-1 text-sm leading-6 text-stone-500">
-                        Based on your target role, location and skills.
+                      <p role="status" className="mt-3 text-sm text-stone-500">
+                        Finding opportunities for your profile…
                       </p>
-                    </div>
-
-                    <Link
-                      href="/jobs"
-                      className="jp-action shrink-0 rounded-full bg-[#d8f275] px-4 py-2 text-xs font-semibold text-[#242332] transition hover:bg-[#cbe660] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-600"
-                    >
-                      Browse all ↗
-                    </Link>
-                  </div>
-
-                  <div className="mt-5">
-                    {opportunitiesFailed ? (
-                      <div
-                        role="status"
-                        className="rounded-2xl bg-stone-50 p-5"
-                      >
-                        <p className="text-sm font-medium text-[#242332]">
-                          Opportunities couldn’t load
-                        </p>
-
-                        <p className="mt-2 text-sm leading-6 text-stone-500">
-                          Please try the jobs page again shortly.
-                        </p>
-
-                        <Link
-                          href="/jobs"
-                          className="mt-3 inline-block text-sm font-semibold text-violet-700 underline underline-offset-4"
-                        >
-                          Open jobs
-                        </Link>
-                      </div>
-                    ) : opportunities.length === 0 ? (
-                      <div className="rounded-2xl bg-stone-50 p-5">
-                        <p className="text-sm font-medium text-[#242332]">
-                          No opportunities found yet
-                        </p>
-
-                        <p className="mt-2 text-sm leading-6 text-stone-500">
-                          Review your target role and location to help us find
-                          relevant openings.
-                        </p>
-
-                        <Link
-                          href="/onboarding"
-                          className="mt-3 inline-block text-sm font-semibold text-violet-700 underline underline-offset-4"
-                        >
-                          Review your profile
-                        </Link>
-                      </div>
-                    ) : (
-                      <ul className="space-y-3">
-                        {opportunities.map((job) => (
-                          <li key={job.id}>
-                            <article className="jp-card min-w-0 rounded-2xl border border-stone-200 p-4 transition hover:border-violet-300">
-                              <div className="flex items-start gap-3">
-                                <div className="shrink-0">
-                                  <CompanyLogo
-                                    company={job.company}
-                                    src={job.logoUrl}
-                                  />
-                                </div>
-
-                                <div className="min-w-0 flex-1">
-                                  <p className="break-words text-xs text-stone-500">
-                                    {job.company}
-                                  </p>
-
-                                  <h3 className="mt-1 break-words text-sm font-semibold leading-6 text-[#242332]">
-                                    {job.title}
-                                  </h3>
-
-                                  <p className="mt-1 break-words text-xs leading-5 text-stone-500">
-                                    {job.location}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="mt-3 flex flex-wrap gap-2">
-                                <span className="rounded-full bg-stone-100 px-2.5 py-1 text-xs text-stone-600">
-                                  {job.employment}
-                                </span>
-
-                                {job.remote && (
-                                  <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs text-violet-800">
-                                    Remote
-                                  </span>
-                                )}
-
-                                {job.searchScope === "nationwide" && (
-                                  <span className="rounded-full bg-lime-100 px-2.5 py-1 text-xs text-lime-900">
-                                    Across Nigeria
-                                  </span>
-                                )}
-                              </div>
-
-                              <p className="mt-3 break-words text-xs text-stone-500">
-                                Source: {job.source}
-                              </p>
-
-                              {job.applyUrl ? (
-                                <a
-                                  href={job.applyUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  aria-label={`View and apply for ${job.title} at ${job.company} (opens in a new tab)`}
-                                  className="jp-action mt-3 inline-flex w-full items-center justify-center rounded-xl bg-[#242332] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-violet-800 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-600"
-                                >
-                                  View & apply ↗
-                                </a>
-                              ) : (
-                                <p className="mt-3 text-xs text-stone-500">
-                                  Application link unavailable
-                                </p>
-                              )}
-                            </article>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </section>
-              </Reveal>
+                    </section>
+                  </Reveal>
+                }
+              >
+                <DashboardOpportunities profile={profile} />
+              </Suspense>
             </div>
 
             {/* Right column */}

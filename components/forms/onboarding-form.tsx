@@ -692,7 +692,7 @@ export default function OnboardingForm({
                       name="target_role"
                       label="What role are you looking for?"
                       value={values.target_role}
-                      placeholder="Frontend Developer"
+                      placeholder="Insert Role"
                       maxLength={150}
                       error={errors.target_role}
                       onChange={(value) => updateField("target_role", value)}
