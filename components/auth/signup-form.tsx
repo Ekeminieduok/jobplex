@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import GoogleSignInButton from "@/components/auth/google-sign-in-button";
 
 type PendingAction = "signup" | "resend" | null;
 
@@ -49,7 +50,7 @@ export default function SignupForm() {
           data: {
             full_name: name,
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/confirm`,
         },
       });
 
@@ -109,7 +110,7 @@ export default function SignupForm() {
         type: "signup",
         email: emailInput.value,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: `${window.location.origin}/auth/confirm`,
         },
       });
 
@@ -119,7 +120,7 @@ export default function SignupForm() {
       }
 
       setMessage(
-        "Confirmation requested. Check your inbox and open the newest link in this browser.",
+       "Check your inbox and open the newest confirmation email to continue.",
       );
     } catch {
       setMessage(
@@ -152,14 +153,7 @@ export default function SignupForm() {
           Discover opportunities that fit your skills and goals.
         </p>
 
-        <button
-          type="button"
-          disabled={isBusy}
-          onClick={() => setMessage("Google sign-in is not connected yet.")}
-          className="mt-6 w-full rounded-lg border border-stone-300 px-4 py-3 text-sm font-semibold hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          Continue with Google
-        </button>
+        <GoogleSignInButton disabled={isBusy} />
 
         <div className="my-6 flex items-center gap-3">
           <div className="h-px flex-1 bg-stone-200" />

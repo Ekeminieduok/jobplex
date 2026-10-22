@@ -139,7 +139,7 @@ async function fetchPage(
       "X-API-Key": apiKey,
     },
     cache: "no-store",
-    signal: AbortSignal.timeout(20_000),
+   signal: AbortSignal.timeout(30_000),
   });
 
   if (!response.ok) {

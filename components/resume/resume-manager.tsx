@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import ResumeSearchPanel from "@/components/resume/resume-search-panel";
 
 type ResumeInfo = {
   updatedAt: string;
@@ -289,6 +290,10 @@ export default function ResumeManager({ userId }: { userId: string }) {
           </p>
         )}
       </section>
+
+      {resume && !loading && !busy && (
+        <ResumeSearchPanel key={resume.updatedAt} userId={userId} />
+      )}
 
       {resume && previewUrl && (
         <section className="overflow-hidden rounded-3xl border border-stone-200 bg-white">
