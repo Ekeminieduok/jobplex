@@ -13,6 +13,7 @@ import {
   Menu,
   Sparkles,
   UserRound,
+   Bookmark,
   X,
 } from "lucide-react";
 
@@ -43,6 +44,11 @@ const navigation = [
     href: "/jobs",
     label: "Opportunities",
     icon: BriefcaseBusiness,
+  },
+  {
+    href: "/saved-jobs",
+    label: "Saved jobs",
+    icon: Bookmark,
   },
   {
     href: "/resume",
