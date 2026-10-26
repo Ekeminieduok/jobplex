@@ -11,14 +11,23 @@ import {
 } from "lucide-react";
 
 import CompanyLogo from "@/components/jobs/company-logo";
+import SaveJobButton from "@/components/jobs/save-job-button";
 import Reveal from "@/components/ui/reveal";
 import type { LiveJob } from "@/lib/jobs/jsearch";
 
 type Props = {
   jobs: LiveJob[];
+  savedView?: boolean;
+  onSavedChange?: (jobId: string, saved: boolean) => void;
 };
 
-export default function LiveJobBrowser({ jobs }: Props) {
+export default function  LiveJobBrowser({
+  jobs,
+  savedView = false,
+  onSavedChange,
+  }: Props) {
+
+
   const [query, setQuery] = useState("");
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [page, setPage] = useState(1);
@@ -65,12 +74,7 @@ export default function LiveJobBrowser({ jobs }: Props) {
     <div>
       <Reveal>
         <div className="rounded-3xl border border-stone-200 bg-white p-5 sm:p-6">
-          <label
-            htmlFor="job-search"
-            className="text-sm font-semibold text-[#242332]"
-          >
-            Find your next opportunity
-          </label>
+          {savedView ? "Search your saved jobs" : "Find your next opportunity"}
 
           <div className="relative mt-3">
             <Search
@@ -147,13 +151,19 @@ export default function LiveJobBrowser({ jobs }: Props) {
               <Search className="h-5 w-5" />
             </div>
 
-            <h2 className="text-lg font-semibold">No opportunities found</h2>
+           <h2 className="text-lg font-semibold">
+  {savedView && jobs.length === 0
+    ? "No saved jobs yet"
+    : "No opportunities found"}
+</h2>
 
-            <p className="mt-2 text-sm leading-6 text-stone-600">
-              {jobs.length
-                ? "Try another keyword or remove the remote filter."
-                : "No listings were returned. Please check back later."}
-            </p>
+          <p className="mt-2 text-sm leading-6 text-stone-600">
+  {jobs.length
+    ? "Try another keyword or remove the remote filter."
+    : savedView
+      ? "Save opportunities while browsing and return to them here."
+      : "No listings were returned. Please check back later."}
+</p>
 
             {jobs.length > 0 && (
               <button
@@ -267,6 +277,11 @@ export default function LiveJobBrowser({ jobs }: Props) {
                         Application link unavailable
                       </p>
                     )}
+
+                    <SaveJobButton
+                      job={job}
+                      onSavedChange={onSavedChange}
+                    />
                   </div>
                 </article>
               </Reveal>

@@ -68,17 +68,14 @@ export default function ResumeSearchPanel({
     try {
       await action();
     } catch (error) {
-      if (mounted.current) {
-        const details =
-          error instanceof Error
-            ? [
-                `${error.name}: ${error.message}`,
-                error.stack ?? "No stack trace available",
-              ].join("\n")
-            : String(error);
+  if (mounted.current) {
+    setError(
+      error instanceof Error
+        ? error.message
+        : "Something went wrong. Please try again.",
+    );
+  }
 
-        setError(details);
-      }
     } finally {
       lock.current = false;
 

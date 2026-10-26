@@ -11,7 +11,8 @@ import MobileHeader from "@/components/dashboard/mobile-header";
 import CompanyLogo from "@/components/jobs/company-logo";
 import { getProfileJobs } from "@/lib/jobs/profile-jobs";
 import type { LiveJob } from "@/lib/jobs/jsearch";
-import { FileText } from "lucide-react";
+import { Bookmark, FileText } from "lucide-react";
+import SaveJobButton from "@/components/jobs/save-job-button";
 import Reveal from "@/components/ui/reveal";
 
 export const metadata: Metadata = {
@@ -272,6 +273,7 @@ async function DashboardOpportunities({
                         Application link unavailable
                       </p>
                     )}
+                    <SaveJobButton job={job} />
                   </article>
                 </li>
               ))}
@@ -400,6 +402,14 @@ async function DashboardContent() {
                 <Icon name="briefcase" />
                 Opportunities
               </a>
+
+              <Link
+                href="/saved-jobs"
+                className="flex min-h-11 items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
+              >
+                <Bookmark aria-hidden="true" className="h-5 w-5 shrink-0" />
+                Saved jobs
+              </Link>
 
               <Link
                 href="/resume"
