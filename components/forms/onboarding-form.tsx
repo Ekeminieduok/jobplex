@@ -838,7 +838,7 @@ export default function OnboardingForm({
 
                     <p className="rounded-xl bg-[#f0ebff] p-4 text-xs leading-6 text-stone-600">
                       These preferences will guide future job recommendations.
-                      You can change them later.
+                     
                     </p>
                   </>
                 )}
