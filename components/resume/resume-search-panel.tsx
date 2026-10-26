@@ -71,13 +71,17 @@ export default function ResumeSearchPanel({
     try {
       await action();
     } catch (error) {
-      if (mounted.current) {
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Something went wrong. Please try again.",
-        );
-      }
+  if (mounted.current) {
+    const details =
+      error instanceof Error
+        ? [
+            `${error.name}: ${error.message}`,
+            error.stack ?? "No stack trace available",
+          ].join("\n")
+        : String(error);
+
+    setError(details);
+  }
     } finally {
       lock.current = false;
 
@@ -412,10 +416,13 @@ pdfjs.GlobalWorkerOptions.workerSrc =
       </p>
 
       {error && (
-        <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-700">
-          {error}
-        </p>
-      )}
+  <pre
+    role="alert"
+    className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap break-all rounded-xl bg-red-50 p-3 text-xs text-red-700"
+  >
+    {error}
+  </pre>
+)}
 
       <p className="mt-4 text-xs leading-5 text-stone-500">
         Text is processed in your browser. Only approved skills and a role
