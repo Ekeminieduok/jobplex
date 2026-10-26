@@ -5,10 +5,7 @@ import { useRouter } from "next/navigation";
 import { FileSearch, LoaderCircle } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
-import {
-  resumeVersion,
-  suggestFromText,
-} from "@/lib/resume/suggestions";
+import { resumeVersion, suggestFromText } from "@/lib/resume/suggestions";
 
 type Suggestions = ReturnType<typeof suggestFromText>;
 
@@ -71,17 +68,17 @@ export default function ResumeSearchPanel({
     try {
       await action();
     } catch (error) {
-  if (mounted.current) {
-    const details =
-      error instanceof Error
-        ? [
-            `${error.name}: ${error.message}`,
-            error.stack ?? "No stack trace available",
-          ].join("\n")
-        : String(error);
+      if (mounted.current) {
+        const details =
+          error instanceof Error
+            ? [
+                `${error.name}: ${error.message}`,
+                error.stack ?? "No stack trace available",
+              ].join("\n")
+            : String(error);
 
-    setError(details);
-  }
+        setError(details);
+      }
     } finally {
       lock.current = false;
 
@@ -115,12 +112,9 @@ export default function ResumeSearchPanel({
       }
 
       // Imported only after the user clicks the analysis button.
-     const pdfjs = await import(
-  "pdfjs-dist/legacy/build/pdf.mjs"
-);
+      const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
-pdfjs.GlobalWorkerOptions.workerSrc =
-  `/pdfjs/pdf.worker.legacy.min.mjs?v=${pdfjs.version}`;
+      pdfjs.GlobalWorkerOptions.workerSrc = `/pdfjs/pdf.worker.legacy.min.mjs?v=${pdfjs.version}`;
 
       const task = pdfjs.getDocument({
         data: bytes,
@@ -137,17 +131,42 @@ pdfjs.GlobalWorkerOptions.workerSrc =
 
         for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
           const page = await pdf.getPage(pageNumber);
-          const content = await page.getTextContent();
+          const reader = page.streamTextContent().getReader();
+          let finished = false;
 
-          text += content.items
-            .map((item) => ("str" in item ? item.str : ""))
-            .join(" ");
+          try {
+            while (true) {
+              const { value, done } = await reader.read();
 
-          text += "\n";
-          page.cleanup();
+              if (done) {
+                finished = true;
+                break;
+              }
 
-          if (text.length > 200_000) {
-            throw new Error("This PDF contains too much text for a resume.");
+              for (const item of value.items) {
+                if ("str" in item && typeof item.str === "string") {
+                  text += item.str;
+                  text += item.hasEOL ? "\n" : " ";
+                }
+              }
+
+              if (text.length > 200_000) {
+                throw new Error(
+                  "This PDF contains too much text for a resume.",
+                );
+              }
+            }
+
+            text += "\n";
+          } finally {
+            try {
+              if (!finished) {
+                await reader.cancel().catch(() => undefined);
+              }
+            } finally {
+              reader.releaseLock();
+              page.cleanup();
+            }
           }
         }
       } catch (error) {
@@ -163,7 +182,7 @@ pdfjs.GlobalWorkerOptions.workerSrc =
       if (text.replace(/\s/g, "").length < 50) {
         throw new Error(
           "We couldn't find enough readable text. " +
-          "Upload a text-based PDF; scanned images aren't supported yet.",
+            "Upload a text-based PDF; scanned images aren't supported yet.",
         );
       }
 
@@ -202,8 +221,8 @@ pdfjs.GlobalWorkerOptions.workerSrc =
 
       setSelectedRole(
         sameResume &&
-        next.roles.some((role) => role.title === saved?.approved_role)
-          ? saved.approved_role ?? ""
+          next.roles.some((role) => role.title === saved?.approved_role)
+          ? (saved.approved_role ?? "")
           : "",
       );
 
@@ -238,7 +257,9 @@ pdfjs.GlobalWorkerOptions.workerSrc =
 
       if (!mounted.current) return;
 
-      setMessage("Saved. Your dashboard and opportunities will use these choices.");
+      setMessage(
+        "Saved. Your dashboard and opportunities will use these choices.",
+      );
       router.refresh();
     });
   }
@@ -258,7 +279,9 @@ pdfjs.GlobalWorkerOptions.workerSrc =
 
       setSelectedSkills([]);
       setSelectedRole("");
-      setMessage("Resume-assisted searching is off. Your profile still applies.");
+      setMessage(
+        "Resume-assisted searching is off. Your profile still applies.",
+      );
       router.refresh();
     });
   }
@@ -284,8 +307,8 @@ pdfjs.GlobalWorkerOptions.workerSrc =
         <div>
           <h2 className="text-lg font-semibold">Find more possibilities</h2>
           <p className="mt-2 text-sm leading-6 text-stone-600">
-            Review skills and related roles from your resume. You choose
-            what influences your search; your profile remains the starting point.
+            Review skills and related roles from your resume. You choose what
+            influences your search; your profile remains the starting point.
           </p>
         </div>
       </div>
@@ -411,22 +434,27 @@ pdfjs.GlobalWorkerOptions.workerSrc =
         </div>
       )}
 
-      <p role="status" aria-live="polite" className="mt-4 text-sm text-violet-800">
+      <p
+        role="status"
+        aria-live="polite"
+        className="mt-4 text-sm text-violet-800"
+      >
         {pending || message}
       </p>
 
       {error && (
-  <pre
-    role="alert"
-    className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap break-all rounded-xl bg-red-50 p-3 text-xs text-red-700"
-  >
-    {error}
-  </pre>
-)}
+        <pre
+          role="alert"
+          className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap break-all rounded-xl bg-red-50 p-3 text-xs text-red-700"
+        >
+          {error}
+        </pre>
+      )}
 
       <p className="mt-4 text-xs leading-5 text-stone-500">
-        Text is processed in your browser. Only approved skills and a role
-        are saved. Replacing or deleting the PDF makes its previous choices inactive.
+        Text is processed in your browser. Only approved skills and a role are
+        saved. Replacing or deleting the PDF makes its previous choices
+        inactive.
       </p>
     </section>
   );
