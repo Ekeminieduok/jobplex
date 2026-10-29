@@ -13,6 +13,9 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "Job Plex",
   description: "Discover jobs that match your skills and goals.",
+   icons: {
+    icon: "/icon.png",
+   }
 };
 
 export default function RootLayout({
