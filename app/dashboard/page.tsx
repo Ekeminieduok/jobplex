@@ -599,7 +599,7 @@ async function DashboardContent() {
                 <section id="skills" className={`${panel} scroll-mt-6`}>
                   <div className="flex items-center justify-between gap-3">
                     <h2 className="text-base font-semibold">
-                      Skills you bring
+                      Skills you offer
                     </h2>
 
                     <span className="text-xs text-stone-500">
