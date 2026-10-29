@@ -27,12 +27,9 @@ export default function ForgotPasswordForm() {
     try {
       const supabase = createClient();
 
-      const { error } = await supabase.auth.resetPasswordForEmail(
-        email,
-        {
-          redirectTo: `${window.location.origin}/auth/confirm`,
-        },
-      );
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/confirm`,
+      });
 
       if (error) {
         setError(
@@ -45,9 +42,7 @@ export default function ForgotPasswordForm() {
 
       setSent(true);
     } catch {
-      setError(
-        "Check your connection and try requesting the email again.",
-      );
+      setError("Check your connection and try requesting the email again.");
     } finally {
       lockRef.current = false;
       setBusy(false);
@@ -56,16 +51,9 @@ export default function ForgotPasswordForm() {
 
   return (
     <>
-      <form
-        onSubmit={handleSubmit}
-        aria-busy={busy}
-        className="space-y-5"
-      >
+      <form onSubmit={handleSubmit} aria-busy={busy} className="space-y-5">
         <div>
-          <label
-            htmlFor="recovery-email"
-            className="text-sm font-medium"
-          >
+          <label htmlFor="recovery-email" className="text-sm font-medium">
             Email address
           </label>
 
@@ -105,9 +93,9 @@ export default function ForgotPasswordForm() {
             role="status"
             className="rounded-xl bg-violet-50 p-4 text-sm leading-6 text-violet-900"
           >
-            If this address has an eligible account, you’ll receive a
-            password reset email. Check your inbox and spam folder,
-            then open the newest link.
+            If this address has an eligible account, you’ll receive a password
+            reset email. Check your inbox and spam folder, then open the newest
+            link.
           </p>
         )}
       </form>
