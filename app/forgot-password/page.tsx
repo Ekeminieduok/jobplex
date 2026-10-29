@@ -5,7 +5,7 @@ export default function ForgotPasswordPage() {
   return (
     <AuthCard
       title="Forgot your password?"
-      description="Enter your account email to get you a link to choose a new password."
+      description="Enter your account email to get your link to choose a new password."
     >
       <ForgotPasswordForm />
     </AuthCard>
