@@ -176,14 +176,14 @@ export default function  LiveJobBrowser({
             )}
           </div>
         ) : (
-          <div className="grid gap-5 md:grid-cols-2">
+          <div className="grid items-start gap-5 md:grid-cols-2">
             {visibleJobs.map((job, index) => (
               <Reveal
                 key={job.id}
                 delay={Math.min(index, 3) * 0.045}
                 className="h-full min-w-0"
               >
-                <article className="jp-card flex h-full min-w-0 flex-col rounded-3xl border border-stone-200 bg-white p-5 sm:p-6">
+                <article className="jp-card flex  min-w-0 flex-col rounded-3xl border border-stone-200 bg-white p-5 sm:p-6">
                   <div className="flex items-start gap-3">
                     <div className="shrink-0">
                       <CompanyLogo company={job.company} src={job.logoUrl} />
